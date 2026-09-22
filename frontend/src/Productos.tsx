@@ -1,4 +1,4 @@
-import {Datagrid, List, TextField, Edit, SimpleForm, TextInput} from "react-admin";
+import {Datagrid, List, TextField, Edit, SimpleForm, TextInput, Create} from "react-admin";
 
 export const listarProductos = ()=>(
     <List>
@@ -20,3 +20,12 @@ export const editarProductos = ()=>(
     </Edit>
 );
 
+export const crearProductos = ()=>(
+    <Create>
+        <SimpleForm>
+            <TextInput source="id" />
+            <TextInput source="nombre" />
+            <TextInput source="empresa" />
+        </SimpleForm>
+    </Create>
+);

@@ -2,6 +2,7 @@ const express=require("express");
 const MongoClient=require("mongodb").MongoClient;
 var cors=require("cors")
 const bodyParser=require("body-parser")
+const argon2=require("argon2")
 
 const app=express();
 let db;
@@ -83,9 +84,36 @@ async function updateData(coleccion,  req, res){
 
 }
 
+
 app.put("/Productos/:id", async (req, res)=>{
 	await updateData("productos", req, res)
 })
+
+async function createData(coleccion, valores, req, res){
+	let data=await db.collection(coleccion).insertOne(valores);
+	res.json(data);
+}
+
+app.post("/Productos", async (req, res)=>{
+	let valores=req.body;
+	valores["id"]=Number(valores["id"]);
+	await createData("productos", valores, req, res);
+})
+
+app.post("/registrarse", async(req, res)=>{
+	let user=req.body.username;
+	let pass=req.body.password;
+	let nombre=req.body.nombre;
+	let data=await db.collection("usuarios").findOne({"usuario":user});
+	if(data==null){
+		let hash=await argon2.hash(pass, {type: argon2.argon2id, memoryCost:64*1024, timeCost:3, parallelism:1, saltLength:128}) 
+		let usuarioAgregar={"usuario":user, "password":hash, "nombre":nombre};
+		data=await db.collection("usuarios").insertOne(usuarioAgregar)
+	}else{
+		res.sendStatus(401);
+	}
+})
+
 
 app.listen(PORT,async ()=>{
 	await connectToDB();
