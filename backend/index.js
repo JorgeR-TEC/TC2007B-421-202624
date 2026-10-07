@@ -12,11 +12,22 @@ app.use(cors());
 app.use(bodyParser.json());
 
 async function connectToDB(){
-	let client=new MongoClient("mongodb://127.0.0.1:27017/ejemplo421");
+	let client=new MongoClient(await process.env.DB);
 	await client.connect();
 	db=client.db();
 	console.log("conectado a la base de datos");
 } 
+
+
+async function log(sujeto, accion, objeto){
+	nuevoLog={}
+	nuevoLog["timestamp"]=new Date();
+	nuevoLog["sujeto"]=sujeto;
+	nuevoLog["accion"]=accion;
+	nuevoLog["objeto"]=objeto;
+	await db.collection("log").insertOne(nuevoLog);
+	
+}
 
 async function getList(coleccion, req, res){
 	let sortBy=req.query._sort;
@@ -48,12 +59,20 @@ async function getManyReference(coleccion, req, res){
 	res.json(data);
 }
 app.get("/Productos", async (req, res)=>{
-	if("_sort" in req.query){//getList
-		await getList("productos", req,res);
-	}else if("id" in req.query){
-		await getMany("productos", req,res)
-	}else{	
-		await getManyReference("productos", req,res);
+	try{
+		let token=req.get("Authentication");
+		let verifiedToken=await jwt.verify(token, await process.env.LLAVEJWT);
+		let user=verifiedToken.usuario;
+		await log(user, "consultar datos", "/Productos");
+		if("_sort" in req.query){//getList
+			await getList("productos", req,res);
+		}else if("id" in req.query){
+			await getMany("productos", req,res)
+		}else{	
+			await getManyReference("productos", req,res);
+		}
+	}catch{
+		res.sendStatus(401);
 	}
 });
 
@@ -123,14 +142,15 @@ app.post("/login", async(req, res)=>{
 	if(data==null){
 		res.sendStatus(401);
 	}else if(argon2.verify(data.password, pass)){
-		let token=jwt.sign({"usuario":data.user}, "llavesecreta", {expiresIn:1000})
-		res.json({"token":token});
+		let token=jwt.sign({"usuario":data.usuario}, await process.env.LLAVEJWT, {expiresIn:1000})
+		res.json({"token":token, "id":data.usuario});
 	}else{
 		res.sendStatus(401);
 	}
 })
 
 app.listen(PORT,async ()=>{
+	await process.loadEnvFile(".env")
 	await connectToDB();
 	console.log("aplicacion iniciada en puerto 3000")
 });

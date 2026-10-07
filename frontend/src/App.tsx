@@ -4,9 +4,10 @@ import {Route} from  "react-router-dom";
 import {listarProductos, editarProductos, crearProductos} from "./Productos";
 import {dataProvider} from "./dataProvider";
 import Registro from "./registrarse";
+import authProvider from "./Authprovider";
 
 export const App = () => (
-<Admin layout={Layout} dataProvider={dataProvider}>
+<Admin layout={Layout} dataProvider={dataProvider} authProvider={authProvider}>
 <Resource
     name="Productos"
     list={listarProductos}

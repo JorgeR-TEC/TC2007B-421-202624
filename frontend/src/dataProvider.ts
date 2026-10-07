@@ -5,7 +5,8 @@ const fetchJsonUtils=(url:string, options:fetchUtils.Options={})=>{
     if(!options.headers){
         options.headers=new Headers({Accept: "application/json"});
     }
+    options.headers.set("Authentication", sessionStorage.getItem("auth"));
     return fetchUtils.fetchJson(url, options);
 };
 
-export const dataProvider = jsonServerProvider("http://10.49.61.59:3000", fetchJsonUtils);
+export const dataProvider = jsonServerProvider(import.meta.env.VITE_BACKEND, fetchJsonUtils);
